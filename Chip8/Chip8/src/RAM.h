@@ -13,6 +13,7 @@ private:
 public: 
 	bool GetDrawFlag() { return _drawFlag; }
 	void SetDrawFlag(bool draw) { _drawFlag = draw; }
+	void ClearGFXMem();
 
 public:
 	RAM();

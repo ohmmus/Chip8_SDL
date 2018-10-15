@@ -12,6 +12,16 @@ RAM::~RAM()
 {
 }
 
+void RAM::ClearGFXMem()
+{
+	_drawFlag = true;
+
+	for (int i = 0; i < GFX_RAM; i++)
+	{
+		_gfxMem[i] = 0;
+	}
+}
+
 void RAM::LoadROM(const char * fileName)
 {
 	char buffer[TOTAL_RAM];
