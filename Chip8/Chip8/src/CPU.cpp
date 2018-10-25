@@ -4,17 +4,14 @@
 #include <iostream>
 #include <cstdlib>
 
-CPU::CPU()
+CPU::CPU(RAM * systemRamInstance)
 {
-	_systemRam = new RAM;
-
-	// TEST ONLY
-	_systemRam->LoadROM("./res/roms/PONG");
+	_systemRamInstance = systemRamInstance;
 }
 
 CPU::~CPU()
 {
-	delete _systemRam;
+	
 }
 
 void CPU::Initialize()
@@ -51,7 +48,7 @@ void CPU::Emulate()
 
 unsigned short CPU::FetchNextOp()
 {
-	return _systemRam->GetWordSys(_programCounter);
+	return _systemRamInstance->GetWordSys(_programCounter);
 }
 
 void CPU::Decode(unsigned short opcode)
@@ -59,7 +56,7 @@ void CPU::Decode(unsigned short opcode)
 	// Process opcode
 	// http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#3.1
 	
-	std::cout << opcode << std::endl;
+	//std::cout <<"0x"<< std::hex << opcode << std::endl;
 
 	switch (opcode & 0xF000)
 	{
@@ -106,6 +103,7 @@ void CPU::Decode(unsigned short opcode)
 
 		// CXNN: Sets VX to a random number and NN
 		case 0xC000: SetRandWithValue(opcode); break;
+
 		case 0xD000: DisplaySprite(opcode); break;
 		case 0xE000: SkipNextInstIf(opcode); break;			
 		case 0xF000: 
@@ -130,7 +128,7 @@ void CPU::Decode(unsigned short opcode)
 
 void CPU::ClearScreen()
 {
-	_systemRam->ClearGFXMem();
+	_systemRamInstance->ClearGFXMem();
 	_programCounter += 2;
 }
 
@@ -143,7 +141,7 @@ void CPU::ReturnFromSubroutine()
 void CPU::JumpToLocation(unsigned short opcode)
 {
 	_programCounter = opcode & 0x0FFF;
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::CallSubroutineAtLocation(unsigned short opcode)
@@ -157,7 +155,7 @@ void CPU::SkipIfRegEqualVal(unsigned short opcode)
 {
 	if ((_registers[(opcode & 0x0f00) >> 8]) == (opcode & 0x00FF))
 	{
-		_programCounter += 2;
+		_programCounter += 4;
 	}
 }
 
@@ -165,7 +163,7 @@ void CPU::SkipIfRegNotEqualVal(unsigned short opcode)
 {
 	if ((_registers[(opcode & 0x0f00) >> 8]) != (opcode & 0x00FF))
 	{
-		_programCounter += 2;
+		_programCounter += 4;
 	}
 }
 
@@ -173,14 +171,14 @@ void CPU::SkipIfRegEqualReg(unsigned short opcode)
 {
 	if ((_registers[(opcode & 0x0F00) >> 8]) == (_registers[(opcode & 0x00F0) >> 4]))
 	{
-		_programCounter += 2;
+		_programCounter += 4;
 	}
 }
 
 void CPU::LoadValToReg(unsigned short opcode)
 {
 	_registers[(opcode & 0x0F00) >> 8] = opcode & 0x00FF; 
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::Add(unsigned short opcode)
@@ -188,7 +186,7 @@ void CPU::Add(unsigned short opcode)
 	unsigned char val = _registers[(opcode & 0x0F00) >> 8];
 	val += (opcode & 0x00FF);
 	_registers[(opcode & 0x0F00) >> 8] = val;
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::RegisterOps(unsigned short opcode)
@@ -229,21 +227,21 @@ void CPU::RegisterOps(unsigned short opcode)
 			break;
 	}
 
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::SkipNextIfNotEqu(unsigned short opcode)
 {
 	if (_registers[(opcode & 0x0F00) >> 8] != _registers[(opcode & 0x00F0) >> 4])
 	{
-		_programCounter += 2;
+		_programCounter += 4;
 	}
 }
 
 void CPU::SetIndexRegister(unsigned short opcode)
 {
 	_indexRegister = opcode & 0x0FFF;
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::Jump(unsigned short opcode)
@@ -256,13 +254,13 @@ void CPU::SetRandWithValue(unsigned short opcode)
 	unsigned char random = (unsigned char)(rand() % 255);
 	unsigned char value = opcode & 0x00FF & random;
 	_registers[(opcode & 0x0F00) >> 8] = value;
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::DisplaySprite(unsigned short opcode)
 {
 	// TODO: 
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::SkipNextInstIf(unsigned short opcode)
@@ -278,7 +276,7 @@ void CPU::SkipNextInstIf(unsigned short opcode)
 
 	if (doSkip)
 	{
-		_programCounter += 2;
+		_programCounter += 4;
 	}
 
 }
@@ -286,7 +284,7 @@ void CPU::SkipNextInstIf(unsigned short opcode)
 void CPU::LoadDelayTimerVal(unsigned short opcode)
 {
 	_registers[(opcode & 0x0F00) >> 8] = (unsigned char)(_delay_timer);
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::WaitForKeyPress(unsigned short opcode)
@@ -323,47 +321,47 @@ void CPU::WaitForKeyPress(unsigned short opcode)
 		}
 	}
 
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::SetDelayTimerVal(unsigned short opcode)
 {
 	_delay_timer = _registers[(opcode & 0x0F00) >> 8];
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::SetSoundTimerVal(unsigned short opcode)
 {
 	_sound_timer = _registers[(opcode & 0x0F00) >> 8];
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::AddToIndex(unsigned short opcode)
 {
 	_indexRegister += _registers[(opcode & 0x0F00) >> 8];
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::SetSpriteLoc(unsigned short opcode)
 {
 	// TODO: 
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::StoreBCDRepresentation(unsigned short opcode)
 {
 	// TODO:
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::LoadIntoMemory(unsigned short opcode)
 {
 	// TODO:
-	_programCounter++;
+	_programCounter += 2;
 }
 
 void CPU::LoadIntoRegisters(unsigned short opcode)
 {
 	// TODO:
-	_programCounter++;
+	_programCounter += 2;
 }

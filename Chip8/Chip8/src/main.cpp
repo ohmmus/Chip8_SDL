@@ -6,11 +6,27 @@ int main(int argc, char* args[])
 {
 	Chip8 * chip8_Emulator = new Chip8;
 
-	bool continueEmulation = false;
+	bool continueEmulation = true;
 
-	while (!continueEmulation)
+	SDL_Event e;
+
+	while (continueEmulation)
 	{
-		continueEmulation = chip8_Emulator->Update();
+		while (SDL_PollEvent(&e))
+		{
+			switch (e.type)
+			{
+				case SDL_MOUSEBUTTONDOWN:
+				case SDL_QUIT: 
+				case SDL_KEYDOWN: 
+					continueEmulation = false; 
+				break;
+
+				default: continueEmulation = true;
+			}
+		}
+
+		continueEmulation |= chip8_Emulator->Update();
 	}
 
 	delete chip8_Emulator;

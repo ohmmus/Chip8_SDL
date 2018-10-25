@@ -1,9 +1,14 @@
 #pragma once
 
+class Window;
+
 class Display
 {
-	public:
-		Display();
-		~Display();
+private:
+	Window * _window;
+
+public:
+	Display();
+	~Display();
 };
 

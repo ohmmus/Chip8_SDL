@@ -1,12 +1,17 @@
 // Console representation class
 #pragma once
 
-#include "CPU.h"
+class CPU;
+class Window;
+class RAM;
 
 class Chip8
 {
 private: 
+	RAM * _systemRam;
 	CPU * _cpu;
+	Window * _window;
+
 	bool drawFlag;
 
 public:

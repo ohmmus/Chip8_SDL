@@ -19,12 +19,11 @@ private:
 
 	// down = 1, up = 0
 	unsigned short _keyPress[16]; 
-	
-	RAM * _systemRam;
 
+	RAM * _systemRamInstance;
 
 public:
-	CPU();
+	CPU(RAM * systemRamInstance);
 	~CPU();
 
 	void Initialize();
