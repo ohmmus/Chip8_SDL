@@ -19,5 +19,8 @@ public:
 	~Chip8();
 
 	bool Update();
+	void GetKeyDown(int keyDown);
+	void GetKeyUp(int keyDown);
+
 };
 

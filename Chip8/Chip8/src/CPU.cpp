@@ -7,6 +7,11 @@
 CPU::CPU(RAM * systemRamInstance)
 {
 	_systemRamInstance = systemRamInstance;
+
+	for (int i = 0; i < 80; i++)
+	{
+		_systemRamInstance->SetByteSys(i, chip8_fontset[i]);
+	}
 }
 
 CPU::~CPU()
@@ -46,6 +51,55 @@ void CPU::Emulate()
 	}
 }
 
+void CPU::ProcessKeyDown(int key)
+{
+	if (key == '1')			_keyPress[0x1] = 1;
+	else if (key == '2')	_keyPress[0x2] = 1;
+	else if (key == '3')	_keyPress[0x3] = 1;
+	else if (key == '4')	_keyPress[0xC] = 1;
+
+	else if (key == 'q')	_keyPress[0x4] = 1;
+	else if (key == 'w')	_keyPress[0x5] = 1;
+	else if (key == 'e')	_keyPress[0x6] = 1;
+	else if (key == 'r')	_keyPress[0xD] = 1;
+
+	else if (key == 'a')	_keyPress[0x7] = 1;
+	else if (key == 's')	_keyPress[0x8] = 1;
+	else if (key == 'd')	_keyPress[0x9] = 1;
+	else if (key == 'f')	_keyPress[0xE] = 1;
+
+	else if (key == 'z')	_keyPress[0xA] = 1;
+	else if (key == 'x')	_keyPress[0x0] = 1;
+	else if (key == 'c')	_keyPress[0xB] = 1;
+	else if (key == 'v')	_keyPress[0xF] = 1;
+
+	//printf("Press key %c\n", key);
+}
+
+void CPU::ProcessKeyUp(int key)
+{
+	if (key == '1')			_keyPress[0x1] = 0;
+	else if (key == '2')	_keyPress[0x2] = 0;
+	else if (key == '3')	_keyPress[0x3] = 0;
+	else if (key == '4')	_keyPress[0xC] = 0;
+
+	else if (key == 'q')	_keyPress[0x4] = 0;
+	else if (key == 'w')	_keyPress[0x5] = 0;
+	else if (key == 'e')	_keyPress[0x6] = 0;
+	else if (key == 'r')	_keyPress[0xD] = 0;
+
+	else if (key == 'a')	_keyPress[0x7] = 0;
+	else if (key == 's')	_keyPress[0x8] = 0;
+	else if (key == 'd')	_keyPress[0x9] = 0;
+	else if (key == 'f')	_keyPress[0xE] = 0;
+
+	else if (key == 'z')	_keyPress[0xA] = 0;
+	else if (key == 'x')	_keyPress[0x0] = 0;
+	else if (key == 'c')	_keyPress[0xB] = 0;
+	else if (key == 'v')	_keyPress[0xF] = 0;
+}
+
+
 unsigned short CPU::FetchNextOp()
 {
 	return _systemRamInstance->GetWordSys(_programCounter);
@@ -56,15 +110,19 @@ void CPU::Decode(unsigned short opcode)
 	// Process opcode
 	// http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#3.1
 	
-	//std::cout <<"0x"<< std::hex << opcode << std::endl;
+	if (opcode != 0xffff)
+	{
+		std::cout << "0x" << std::hex << opcode << std::endl;
+	}
+
 
 	switch (opcode & 0xF000)
 	{
 		case 0x0000:  // 0x00E0 Clear the display.
-			switch (opcode & 0x000F)
+			switch (opcode & 0x00FF)
 			{
-				case 0x0000: ClearScreen(); break;
-				case 0x000E: ReturnFromSubroutine(); break;
+				case 0x00E0: ClearScreen(); break;
+				case 0x00EE: ReturnFromSubroutine(); break;
 			}
 			break;
 
@@ -122,7 +180,7 @@ void CPU::Decode(unsigned short opcode)
 			break;
 
 		default:
-			printf("Unknown opcode: 0x%X\n", opcode);
+			std::cout << "Unknown opcode: " << opcode << std::endl;
 	}
 }
 
@@ -136,12 +194,12 @@ void CPU::ReturnFromSubroutine()
 {
 	_programCounter = _stack[_stackPointer];
 	_stackPointer--;
+	_programCounter += 2;
 }
 
 void CPU::JumpToLocation(unsigned short opcode)
 {
 	_programCounter = opcode & 0x0FFF;
-	_programCounter += 2;
 }
 
 void CPU::CallSubroutineAtLocation(unsigned short opcode)
@@ -157,6 +215,10 @@ void CPU::SkipIfRegEqualVal(unsigned short opcode)
 	{
 		_programCounter += 4;
 	}
+	else
+	{
+		_programCounter += 2;
+	}
 }
 
 void CPU::SkipIfRegNotEqualVal(unsigned short opcode)
@@ -165,6 +227,10 @@ void CPU::SkipIfRegNotEqualVal(unsigned short opcode)
 	{
 		_programCounter += 4;
 	}
+	else
+	{
+		_programCounter += 2;
+	}
 }
 
 void CPU::SkipIfRegEqualReg(unsigned short opcode)
@@ -172,6 +238,10 @@ void CPU::SkipIfRegEqualReg(unsigned short opcode)
 	if ((_registers[(opcode & 0x0F00) >> 8]) == (_registers[(opcode & 0x00F0) >> 4]))
 	{
 		_programCounter += 4;
+	}
+	else
+	{
+		_programCounter += 2;
 	}
 }
 
@@ -191,7 +261,7 @@ void CPU::Add(unsigned short opcode)
 
 void CPU::RegisterOps(unsigned short opcode)
 {
-	switch (opcode * 0x000F)
+	switch (opcode & 0x000F)
 	{
 		case 0x0000:  // LD
 			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x00F0) >> 4];
@@ -206,24 +276,24 @@ void CPU::RegisterOps(unsigned short opcode)
 			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x0F00) >> 8] ^ _registers[(opcode & 0x00F0) >> 4];
 			break;
 		case 0x0004: // ADD
-			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x0F00) >> 8] + _registers[(opcode & 0x00F0) >> 4];
 			_registers[VFIndex] = (_registers[(opcode & 0x0F00) >> 8] > 255) ? 1 : 0;
+			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x0F00) >> 8] + _registers[(opcode & 0x00F0) >> 4];
 			break;
 		case 0x0005: // SUB
+			_registers[VFIndex] = (_registers[(opcode & 0x0F00) >> 8] > _registers[(opcode & 0x00F0) >> 4]) ?1:0;
 			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x0F00) >> 8] - _registers[(opcode & 0x00F0) >> 4];
-			_registers[VFIndex] = (_registers[(opcode & 0x0F00) >> 8] > _registers[(opcode & 0x00F0) >> 4]) ? 1 : 0;
 			break; 
 		case 0x0006:  // SHR
-			_registers[(opcode & 0x0F00) >> 8] /= 2;
 			_registers[VFIndex] = ((_registers[(opcode & 0x0F00) >> 8] & 0x0001) == 0x0001) ? 1 : 0;
+			_registers[(opcode & 0x0F00) >> 8] /= 2;
 			break;
 		case 0x0007:// SUBN
-			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x0F00) >> 8] - _registers[(opcode & 0x00F0) >> 4];
 			_registers[VFIndex] = (_registers[(opcode & 0x0F00) >> 8] < _registers[(opcode & 0x00F0) >> 4]) ? 1 : 0;
+			_registers[(opcode & 0x0F00) >> 8] = _registers[(opcode & 0x0F00) >> 8] - _registers[(opcode & 0x00F0) >> 4];
 			break;
 		case 0x000E: // SHL
-			_registers[VFIndex] = ((_registers[(opcode & 0x0F00) >> 8] & 0x8000) == 0x8000) ? 1 : 0;
-			_registers[(opcode & 0x0F00) >> 8] *= 2;
+			_registers[VFIndex] = _registers[(opcode & 0x0F00) >> 8] >> 7;
+			_registers[(opcode & 0x0F00) >> 8] <<=1;
 			break;
 	}
 
@@ -235,6 +305,10 @@ void CPU::SkipNextIfNotEqu(unsigned short opcode)
 	if (_registers[(opcode & 0x0F00) >> 8] != _registers[(opcode & 0x00F0) >> 4])
 	{
 		_programCounter += 4;
+	}
+	else
+	{
+		_programCounter += 2;
 	}
 }
 
@@ -259,7 +333,50 @@ void CPU::SetRandWithValue(unsigned short opcode)
 
 void CPU::DisplaySprite(unsigned short opcode)
 {
-	// TODO: 
+	unsigned short x = _registers[(opcode & 0x0F00) >> 8];
+	unsigned short y = _registers[(opcode & 0x00F0) >> 4];
+	unsigned short height = opcode & 0x000F;
+	unsigned short pixel;
+
+	unsigned char * memory = _systemRamInstance->GetSysMem();
+	unsigned char * gfx = _systemRamInstance->GetGFXMem();
+
+	_registers[0xF] = 0;
+	for (int yline = 0; yline < height; yline++)
+	{
+		pixel = memory[_indexRegister + yline];
+		for (int xline = 0; xline < 8; xline++)
+		{
+			if ((pixel & (0x80 >> xline)) != 0)
+			{
+				if (gfx[(x + xline + ((y + yline) * 64))] == 1)
+					_registers[0xF] = 1;
+				gfx[x + xline + ((y + yline) * 64)] ^= 1;
+			}
+		}
+	}
+	
+	// TODO: figure out what this doens't work.
+	//for (int yline = 0; yline < height; yline++)
+	//{
+	//	pixel = _systemRamInstance->GetWordSys(_indexRegister + yline);
+	//	for (int xline = 0; xline < 8; xline++)
+	//	{
+	//		if ((pixel & (0x80 >> xline)) != 0)
+	//		{
+	//			if (_systemRamInstance->GetWordGfx(x + xline + ((y + yline) * 64)) == 1)
+	//			{
+	//				_registers[0xF] = 1;
+	//			}
+	//		
+	//			unsigned short xoredPixel = _systemRamInstance->GetWordGfx(x + xline + ((y + yline) * 64));
+	//			xoredPixel ^= 1;
+	//			_systemRamInstance->SetByteGfx(x + xline + ((y + yline) * 64), xoredPixel);
+	//		}
+	//	}
+	//}
+
+	_systemRamInstance->SetDrawFlag(true);
 	_programCounter += 2;
 }
 
@@ -278,7 +395,10 @@ void CPU::SkipNextInstIf(unsigned short opcode)
 	{
 		_programCounter += 4;
 	}
-
+	else
+	{
+		_programCounter += 2;
+	}
 }
 
 void CPU::LoadDelayTimerVal(unsigned short opcode)
@@ -339,29 +459,58 @@ void CPU::SetSoundTimerVal(unsigned short opcode)
 void CPU::AddToIndex(unsigned short opcode)
 {
 	_indexRegister += _registers[(opcode & 0x0F00) >> 8];
+
+	_registers[0xF] = 0;
+	if (_indexRegister > 0xFFF)
+	{
+		_registers[0xF] = 1;
+	}
+
 	_programCounter += 2;
 }
 
 void CPU::SetSpriteLoc(unsigned short opcode)
 {
-	// TODO: 
+	_indexRegister = _registers[(opcode & 0x0F00) >> 8] * 0x5;
 	_programCounter += 2;
 }
 
 void CPU::StoreBCDRepresentation(unsigned short opcode)
 {
-	// TODO:
 	_programCounter += 2;
+
+	unsigned char * memory = _systemRamInstance->GetSysMem();
+
+	memory[_indexRegister] = _registers[(opcode & 0x0F00) >> 8] / 100;
+	memory[_indexRegister + 1] = (_registers[(opcode & 0x0F00) >> 8] / 10) % 10;
+	memory[_indexRegister + 2] = (_registers[(opcode & 0x0F00) >> 8] % 100) % 10;
 }
 
 void CPU::LoadIntoMemory(unsigned short opcode)
 {
-	// TODO:
+	unsigned char * memory = _systemRamInstance->GetSysMem();
+
+	for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i)
+	{
+		memory[_indexRegister + i] = _registers[i];
+	}
+	
+	_indexRegister += ((opcode & 0x0F00) >> 8) + 1;
+
 	_programCounter += 2;
 }
 
 void CPU::LoadIntoRegisters(unsigned short opcode)
 {
-	// TODO:
+	const unsigned char * memory = _systemRamInstance->GetSysMem();
+
+	for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i)
+	{
+		_registers[i] = memory[_indexRegister + i];
+	}
+
+	_indexRegister += ((opcode & 0x0F00) >> 8) + 1;
+	
 	_programCounter += 2;
+
 }

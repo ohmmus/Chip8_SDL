@@ -4,7 +4,7 @@
 
 RAM::RAM()
 {
-	_drawFlag = true;
+	_drawFlag = false;
 }
 
 
@@ -70,10 +70,9 @@ void RAM::SetWordSys(unsigned short addressLoc, unsigned short data)
 	_memory[addressLoc + 1] = ((data) & (0x00FF));
 }
 
-void RAM::SetByteSys(unsigned char addressLoc, unsigned char data)
+void RAM::SetByteSys(unsigned short addressLoc, unsigned char data)
 {
 	_memory[addressLoc] = data;
-
 }
 
 unsigned short RAM::GetWordGfx(unsigned char addressLoc)
@@ -86,7 +85,7 @@ unsigned short RAM::GetWordGfx(unsigned char addressLoc)
 	return (_gfxMem[addressLoc] << 8) | (_gfxMem[addressLoc + 1]);
 }
 
-unsigned char RAM::GetByteSysGfx(unsigned char addressLoc)
+unsigned char RAM::GetByteGfx(unsigned char addressLoc)
 {
 	if (addressLoc >= GFX_RAM)
 	{

@@ -16,17 +16,22 @@ int main(int argc, char* args[])
 		{
 			switch (e.type)
 			{
-				case SDL_MOUSEBUTTONDOWN:
 				case SDL_QUIT: 
-				case SDL_KEYDOWN: 
 					continueEmulation = false; 
 				break;
-
+				case SDL_KEYDOWN:
+					chip8_Emulator->GetKeyDown(e.key.keysym.sym);
+					break;
+				case SDL_KEYUP: 
+					chip8_Emulator->GetKeyUp(e.key.keysym.sym);
+					break;
 				default: continueEmulation = true;
 			}
 		}
 
 		continueEmulation |= chip8_Emulator->Update();
+
+	
 	}
 
 	delete chip8_Emulator;

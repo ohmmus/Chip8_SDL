@@ -2,31 +2,11 @@
 #include "Window.h"
 #include "RAM.h"
 
-//
-//void Window::DrawToWindow(unsigned char * gfxBuffer)
-//{
-//	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 0);
-//	SDL_RenderClear(_renderer);
-//	SDL_SetRenderDrawColor(_renderer, 255, 0, 0, 255);
-//	
-//	for (int i = 0; i < GFX_RAM; i++)
-//	{
-//		if (gfxBuffer[i] == 1)
-//		{
-//			
-//		}
-//	}
-//
-//	SDL_RenderDrawPoint(_renderer, 320, 240);
-//	SDL_RenderPresent(_renderer);
-//	
-//}
-
 Window::Window()
 {
 	_window = SDL_CreateWindow("Chip 8",
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
 		SCREEN_W,
 		SCREEN_H,
 		SDL_WINDOW_SHOWN);
@@ -35,11 +15,9 @@ Window::Window()
 	{
 		_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	}
-}
 
-void Window::DrawSprite()
-{
-
+	SDL_RenderSetLogicalSize(_renderer, CHIP8_W, CHIP8_H);
+	//SDL_RenderSetIntegerScale(_renderer, SDL_TRUE);
 }
 
 Window::~Window()
@@ -49,4 +27,25 @@ Window::~Window()
 
 	_renderer = NULL;
 	_window = NULL;
+}
+
+void Window::Draw(const unsigned char * gfxBuffer)
+{
+	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 0);
+	SDL_RenderClear(_renderer);
+	SDL_SetRenderDrawColor(_renderer, 0, 255, 0, 255);
+
+	// Chip8 display is 64x32
+	for (int y = 0; y < CHIP8_H; y++)
+	{
+		for (int x = 0; x < CHIP8_W; x++)
+		{
+			if (gfxBuffer[(y * CHIP8_W) + x] == 1) 
+			{
+				SDL_RenderDrawPoint(_renderer,x, y);
+			}
+		}
+	}
+
+	SDL_RenderPresent(_renderer);
 }

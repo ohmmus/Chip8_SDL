@@ -15,6 +15,7 @@ public:
 	void SetDrawFlag(bool draw) { _drawFlag = draw; }
 	void ClearGFXMem();
 	unsigned char * GetGFXMem() { return &_gfxMem[0]; }
+	unsigned char * GetSysMem() { return &_memory[0]; }
 public:
 	RAM();
 	~RAM();
@@ -23,10 +24,9 @@ public:
 	unsigned short GetWordSys(unsigned short addressLoc);
 	unsigned char GetByteSys(unsigned char addressLoc);
 	void SetWordSys(unsigned short addressLoc, unsigned short data);
-	void SetByteSys(unsigned char addressLoc, unsigned char data);
+	void SetByteSys(unsigned short addressLoc, unsigned char data);
 
 	unsigned short GetWordGfx(unsigned char addressLoc);
-	unsigned char GetByteSysGfx(unsigned char addressLoc);
+	unsigned char GetByteGfx(unsigned char addressLoc);
 	void SetByteGfx(unsigned char addressLoc, unsigned char data);
 };
-
