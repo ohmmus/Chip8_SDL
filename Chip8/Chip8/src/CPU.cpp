@@ -112,7 +112,7 @@ void CPU::Decode(unsigned short opcode)
 	
 	if (opcode != 0xffff)
 	{
-		std::cout << "0x" << std::hex << opcode << std::endl;
+		//std::cout << "0x" << std::hex << opcode << std::endl;
 	}
 
 
@@ -495,8 +495,6 @@ void CPU::LoadIntoMemory(unsigned short opcode)
 		memory[_indexRegister + i] = _registers[i];
 	}
 	
-	_indexRegister += ((opcode & 0x0F00) >> 8) + 1;
-
 	_programCounter += 2;
 }
 
@@ -509,8 +507,6 @@ void CPU::LoadIntoRegisters(unsigned short opcode)
 		_registers[i] = memory[_indexRegister + i];
 	}
 
-	_indexRegister += ((opcode & 0x0F00) >> 8) + 1;
-	
 	_programCounter += 2;
 
 }

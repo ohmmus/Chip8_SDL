@@ -15,12 +15,11 @@ private:
 	bool drawFlag;
 
 public:
-	Chip8();
+	Chip8(const char * fileName);
 	~Chip8();
 
 	bool Update();
 	void GetKeyDown(int keyDown);
 	void GetKeyUp(int keyDown);
-
 };
 
