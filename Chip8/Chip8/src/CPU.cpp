@@ -8,10 +8,6 @@ CPU::CPU(RAM * systemRamInstance)
 {
 	_systemRamInstance = systemRamInstance;
 
-	for (int i = 0; i < 80; i++)
-	{
-		_systemRamInstance->SetByteSys(i, chip8_fontset[i]);
-	}
 }
 
 CPU::~CPU()
@@ -23,80 +19,107 @@ void CPU::Initialize()
 {
 	_programCounter = 0x200;
 	_indexRegister = 0;
+	
 	_stackPointer = 0;
 	_delay_timer = 0;
 	_sound_timer = 0;
+
+	timeLastTick = 0;
+
+	_systemRamInstance->ClearGFXMem();
+	_systemRamInstance->ClearSysMem();
+	_systemRamInstance->SetDrawFlag(true);
+
+	for (int i = 0; i < 16; ++i)
+	{
+		_keyPress[i] = _registers[i] = 0;
+	}
+
+
+	for (int i = 0; i < 80; i++)
+	{
+		_systemRamInstance->SetByteSys(i, chip8_fontset[i]);
+	}
+
+	srand(0);
 }
 
 void CPU::Emulate()
 {
+	unsigned int currentTime = SDL_GetTicks();
+
 	// Fetch
 	unsigned short nextOp = FetchNextOp();
 
 	// Decode
 	Decode(nextOp);
 
-	if (_delay_timer > 0)
-	{ 
-		_delay_timer--;
-	}
-
-	if (_sound_timer > 0)
+	if (currentTime > timeLastTick + 17) // 1/60 * 1000 
 	{
-		if (_sound_timer == 1)
+		if (_delay_timer > 0)
 		{
-			std::cout << "BEEP!" << std::endl;
+			_delay_timer--;
 		}
-		_sound_timer--;
+
+		if (_sound_timer > 0)
+		{
+			if (_sound_timer == 1)
+			{
+				//std::cout << "BEEP!" << std::endl;
+			}
+			_sound_timer--;
+		}
+
+		timeLastTick = SDL_GetTicks();
 	}
 }
 
 void CPU::ProcessKeyDown(int key)
 {
-	if (key == '1')			_keyPress[0x1] = 1;
-	else if (key == '2')	_keyPress[0x2] = 1;
-	else if (key == '3')	_keyPress[0x3] = 1;
-	else if (key == '4')	_keyPress[0xC] = 1;
+	if (key == '1')					_keyPress[0x1] = 1;
+	else if (key == '2')			_keyPress[0x2] = 1;
+	else if (key == '3')			_keyPress[0x3] = 1;
+	else if (key == '4')			_keyPress[0xC] = 1;
 
-	else if (key == 'q')	_keyPress[0x4] = 1;
-	else if (key == 'w')	_keyPress[0x5] = 1;
-	else if (key == 'e')	_keyPress[0x6] = 1;
-	else if (key == 'r')	_keyPress[0xD] = 1;
+	else if (key == 'q')			_keyPress[0x4] = 1;
+	else if (key == 'w')			_keyPress[0x5] = 1;
+	else if (key == 'e')			_keyPress[0x6] = 1;
+	else if (key == 'r')			_keyPress[0xD] = 1;
 
-	else if (key == 'a')	_keyPress[0x7] = 1;
-	else if (key == 's')	_keyPress[0x8] = 1;
-	else if (key == 'd')	_keyPress[0x9] = 1;
-	else if (key == 'f')	_keyPress[0xE] = 1;
+	else if (key == 'a')			_keyPress[0x7] = 1;
+	else if (key == 's')			_keyPress[0x8] = 1;
+	else if (key == 'd')			_keyPress[0x9] = 1;
+	else if (key == 'f')			_keyPress[0xE] = 1;
 
-	else if (key == 'z')	_keyPress[0xA] = 1;
-	else if (key == 'x')	_keyPress[0x0] = 1;
-	else if (key == 'c')	_keyPress[0xB] = 1;
-	else if (key == 'v')	_keyPress[0xF] = 1;
+	else if (key == 'z')			_keyPress[0xA] = 1;
+	else if (key == 'x')			_keyPress[0x0] = 1;
+	else if (key == 'c')			_keyPress[0xB] = 1;
+	else if (key == 'v')			_keyPress[0xF] = 1;
 
 	//printf("Press key %c\n", key);
 }
 
 void CPU::ProcessKeyUp(int key)
 {
-	if (key == '1')			_keyPress[0x1] = 0;
-	else if (key == '2')	_keyPress[0x2] = 0;
-	else if (key == '3')	_keyPress[0x3] = 0;
-	else if (key == '4')	_keyPress[0xC] = 0;
+	if (key == '1')					_keyPress[0x1] = 0;
+	else if (key == '2')			_keyPress[0x2] = 0;
+	else if (key == '3')			_keyPress[0x3] = 0;
+	else if (key == '4')			_keyPress[0xC] = 0;
 
-	else if (key == 'q')	_keyPress[0x4] = 0;
-	else if (key == 'w')	_keyPress[0x5] = 0;
-	else if (key == 'e')	_keyPress[0x6] = 0;
-	else if (key == 'r')	_keyPress[0xD] = 0;
+	else if (key == 'q')			_keyPress[0x4] = 0;
+	else if (key == 'w')			_keyPress[0x5] = 0;
+	else if (key == 'e')			_keyPress[0x6] = 0;
+	else if (key == 'r')			_keyPress[0xD] = 0;
 
-	else if (key == 'a')	_keyPress[0x7] = 0;
-	else if (key == 's')	_keyPress[0x8] = 0;
-	else if (key == 'd')	_keyPress[0x9] = 0;
-	else if (key == 'f')	_keyPress[0xE] = 0;
+	else if (key == 'a')			_keyPress[0x7] = 0;
+	else if (key == 's')			_keyPress[0x8] = 0;
+	else if (key == 'd')			_keyPress[0x9] = 0;
+	else if (key == 'f')			_keyPress[0xE] = 0;
 
-	else if (key == 'z')	_keyPress[0xA] = 0;
-	else if (key == 'x')	_keyPress[0x0] = 0;
-	else if (key == 'c')	_keyPress[0xB] = 0;
-	else if (key == 'v')	_keyPress[0xF] = 0;
+	else if (key == 'z')			_keyPress[0xA] = 0;
+	else if (key == 'x')			_keyPress[0x0] = 0;
+	else if (key == 'c')			_keyPress[0xB] = 0;
+	else if (key == 'v')			_keyPress[0xF] = 0;
 }
 
 
@@ -119,10 +142,10 @@ void CPU::Decode(unsigned short opcode)
 	switch (opcode & 0xF000)
 	{
 		case 0x0000:  // 0x00E0 Clear the display.
-			switch (opcode & 0x00FF)
+			switch (opcode & 0x000F)
 			{
-				case 0x00E0: ClearScreen(); break;
-				case 0x00EE: ReturnFromSubroutine(); break;
+				case 0x0000: ClearScreen(); break;
+				case 0x000E: ReturnFromSubroutine(); break;
 			}
 			break;
 
@@ -192,8 +215,9 @@ void CPU::ClearScreen()
 
 void CPU::ReturnFromSubroutine()
 {
-	_programCounter = _stack[_stackPointer];
 	_stackPointer--;
+	_programCounter = _stack[_stackPointer];
+
 	_programCounter += 2;
 }
 
@@ -204,8 +228,9 @@ void CPU::JumpToLocation(unsigned short opcode)
 
 void CPU::CallSubroutineAtLocation(unsigned short opcode)
 {
-	_stackPointer++;
 	_stack[_stackPointer] = _programCounter;
+	_stackPointer++;
+
 	_programCounter = opcode & 0x0FFF;
 }
 
@@ -295,6 +320,8 @@ void CPU::RegisterOps(unsigned short opcode)
 			_registers[VFIndex] = _registers[(opcode & 0x0F00) >> 8] >> 7;
 			_registers[(opcode & 0x0F00) >> 8] <<=1;
 			break;
+		default: 
+			std::cout << "Invalid register opcode " << opcode << std::endl;
 	}
 
 	_programCounter += 2;
@@ -320,7 +347,7 @@ void CPU::SetIndexRegister(unsigned short opcode)
 
 void CPU::Jump(unsigned short opcode)
 {
-	_programCounter = (opcode * 0x0FFF) + _registers[0];
+	_programCounter = (opcode & 0x0FFF) + _registers[0];
 }
 
 void CPU::SetRandWithValue(unsigned short opcode)
@@ -350,7 +377,10 @@ void CPU::DisplaySprite(unsigned short opcode)
 			if ((pixel & (0x80 >> xline)) != 0)
 			{
 				if (gfx[(x + xline + ((y + yline) * 64))] == 1)
+				{
 					_registers[0xF] = 1;
+				}
+
 				gfx[x + xline + ((y + yline) * 64)] ^= 1;
 			}
 		}
@@ -382,13 +412,36 @@ void CPU::DisplaySprite(unsigned short opcode)
 
 void CPU::SkipNextInstIf(unsigned short opcode)
 {
-	unsigned char regVal = opcode & 0x0F00 >> 8;
+	switch (opcode & 0x00FF)
+	{
+	case 0x009E: // EX9E: Skips the next instruction if the key stored in VX is pressed
+		if (_keyPress[_registers[(opcode & 0x0F00) >> 8]] != 0)
+			_programCounter += 4;
+		else
+			_programCounter += 2;
+		break;
+
+	case 0x00A1: // EXA1: Skips the next instruction if the key stored in VX isn't pressed
+		if (_keyPress[_registers[(opcode & 0x0F00) >> 8]] == 0)
+			_programCounter += 4;
+		else
+			_programCounter += 2;
+		break;
+
+	default:
+		std::cout << "Unknown opcode [0xE000]";
+	}
+
+
+	/*unsigned int regVal = _registers[opcode & 0x0F00 >> 8];
 	bool doSkip = false;
 
-	switch (opcode & 0xF0FF)
+	switch (opcode & 0x00FF)
 	{
-		case 0xE09E: doSkip = _keyPress[regVal] == 1 ? true : false; break;
-		case 0xE0A1: doSkip = _keyPress[regVal] == 0 ? true : false; break;
+		case 0x009E: doSkip = _keyPress[regVal] != 0 ? true : false; break;
+		case 0x00A1: doSkip = _keyPress[regVal] == 0 ? true : false; break;
+		default:
+			std::cout << "Invalid skip opcode " << opcode << std::endl;
 	}
 
 	if (doSkip)
@@ -398,48 +451,31 @@ void CPU::SkipNextInstIf(unsigned short opcode)
 	else
 	{
 		_programCounter += 2;
-	}
+	}*/
 }
 
 void CPU::LoadDelayTimerVal(unsigned short opcode)
 {
-	_registers[(opcode & 0x0F00) >> 8] = (unsigned char)(_delay_timer);
+	_registers[(opcode & 0x0F00) >> 8] =(_delay_timer);
 	_programCounter += 2;
 }
 
 void CPU::WaitForKeyPress(unsigned short opcode)
 {
-	// TODO: stop execution. 
+	bool keyPress = false;
 
-	if (_keyPress[0] || 
-		_keyPress[1] ||
-		_keyPress[2] ||
-		_keyPress[3] ||
-		_keyPress[4] ||
-		_keyPress[5] ||
-		_keyPress[6] ||
-		_keyPress[7] ||
-		_keyPress[8] ||
-		_keyPress[9] ||
-		_keyPress[10] ||
-		_keyPress[11] ||
-		_keyPress[12] ||
-		_keyPress[13] ||
-		_keyPress[14] ||
-		_keyPress[15])
+	for (int i = 0; i < 16; ++i)
 	{
-		for (int i = 0; i < VFIndex; i++)
+		if (_keyPress[i] != 0)
 		{
-			if (_keyPress[i] == 1)
-			{
-				_registers[(opcode & 0x0F00) >> 8] = i;
-
-				// TODO: resume execution;
-
-				break;
-			}
+			_registers[(opcode & 0x0F00) >> 8] = i;
+			keyPress = true;
 		}
 	}
+
+	// If we didn't received a keypress, skip this cycle and try again.
+	if (!keyPress)
+		return;
 
 	_programCounter += 2;
 }
@@ -458,13 +494,19 @@ void CPU::SetSoundTimerVal(unsigned short opcode)
 
 void CPU::AddToIndex(unsigned short opcode)
 {
-	_indexRegister += _registers[(opcode & 0x0F00) >> 8];
+	//_indexRegister += _registers[(opcode & 0x0F00) >> 8];
 
-	_registers[0xF] = 0;
-	if (_indexRegister > 0xFFF)
-	{
+	//_registers[0xF] = 0;
+	//if (_indexRegister > 0xFFF)
+	//{
+	//	_registers[0xF] = 1;
+	//}
+
+	if (_indexRegister + _registers[(opcode & 0x0F00) >> 8] > 0xFFF)	// VF is set to 1 when range overflow (I+VX>0xFFF), and 0 when there isn't.
 		_registers[0xF] = 1;
-	}
+	else
+		_registers[0xF] = 0;
+	_indexRegister += _registers[(opcode & 0x0F00) >> 8];
 
 	_programCounter += 2;
 }
@@ -495,6 +537,7 @@ void CPU::LoadIntoMemory(unsigned short opcode)
 		memory[_indexRegister + i] = _registers[i];
 	}
 	
+	_indexRegister += ((opcode & 0x0F00) >> 8) + 1;
 	_programCounter += 2;
 }
 
@@ -507,6 +550,7 @@ void CPU::LoadIntoRegisters(unsigned short opcode)
 		_registers[i] = memory[_indexRegister + i];
 	}
 
+	_indexRegister += ((opcode & 0x0F00) >> 8) + 1;
 	_programCounter += 2;
 
 }

@@ -3,15 +3,18 @@
 #include "CPU.h"
 #include "Window.h"
 #include "RAM.h"
+
+#include <iostream>
+
 Chip8::Chip8(const char * fileName)
 {
 	_systemRam = new RAM;
 
-	// TEST ONLY
-	_systemRam->LoadROM(fileName);
 
 	_cpu = new CPU(_systemRam);
 	_cpu->Initialize();
+
+	_systemRam->LoadROM(fileName);
 
 	_window = new Window();
 }
@@ -33,17 +36,18 @@ bool Chip8::Update()
 		_systemRam->SetDrawFlag(false);
 	}
 
-	SDL_Delay(1000 / 60);
-
 	return continueEmulation;
 }
 
 void Chip8::GetKeyDown(int keyDown)
 {
 	_cpu->ProcessKeyDown(keyDown);
+	//std::cout << "Keydown " << keyDown << std::endl;
 }
 
-void Chip8::GetKeyUp(int keyDown)
+void Chip8::GetKeyUp(int keyup)
 {
-	_cpu->ProcessKeyUp(keyDown);
+	_cpu->ProcessKeyUp(keyup);
+	//std::cout << "Keyup " << keyup << std::endl;
+
 }

@@ -22,6 +22,14 @@ void RAM::ClearGFXMem()
 	}
 }
 
+void RAM::ClearSysMem()
+{
+	// Clear memory
+	for (int i = 0; i < TOTAL_RAM; ++i)
+		_memory[i] = 0;
+}
+
+
 void RAM::LoadROM(const char * fileName)
 {
 	char buffer[TOTAL_RAM];
@@ -46,7 +54,7 @@ void RAM::LoadROM(const char * fileName)
 
 unsigned short RAM::GetWordSys(unsigned short addressLoc)
 {
-	if (addressLoc > (TOTAL_RAM - 1))
+	if (addressLoc >= (TOTAL_RAM))
 	{
 		return 0;
 	}

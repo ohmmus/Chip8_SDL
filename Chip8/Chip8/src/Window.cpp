@@ -40,7 +40,7 @@ void Window::Draw(const unsigned char * gfxBuffer)
 	{
 		for (int x = 0; x < CHIP8_W; x++)
 		{
-			if (gfxBuffer[(y * CHIP8_W) + x] == 1) 
+			if (gfxBuffer[(y * CHIP8_W) + x] != 0) 
 			{
 				SDL_RenderDrawPoint(_renderer,x, y);
 			}

@@ -43,6 +43,8 @@ private:
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
 
+	unsigned int timeLastTick;
+
 public:
 	CPU(RAM * systemRamInstance);
 	~CPU();

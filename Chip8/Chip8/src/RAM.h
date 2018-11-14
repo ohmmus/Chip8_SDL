@@ -14,8 +14,11 @@ public:
 	bool GetDrawFlag() { return _drawFlag; }
 	void SetDrawFlag(bool draw) { _drawFlag = draw; }
 	void ClearGFXMem();
+	void ClearSysMem();
+
 	unsigned char * GetGFXMem() { return &_gfxMem[0]; }
 	unsigned char * GetSysMem() { return &_memory[0]; }
+
 public:
 	RAM();
 	~RAM();
